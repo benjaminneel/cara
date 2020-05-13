@@ -1,3 +1,104 @@
+<!DOCTYPE html>
 <html>
-Hello world
+<head>
+<meta charset="utf-8" />
+<title>Add a custom style layer</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2FyYW5lZWwiLCJhIjoiY2p2NHJmNW5nMnRvOTRkcGY2NjR1eDdveSJ9.a8cwCl5jPXg8EbZWBm0HXQ';
+	var map = new mapboxgl.Map({
+			style: 'mapbox://styles/caraneel/cka4av9pc17j01in203aszkq2',
+			center: [-74.0066, 40.7135],
+			zoom: 15.5,
+			pitch: 45,
+			bearing: -17.6,
+			container: 'map',
+			antialias: true
+	});
+
+	// The 'building' layer in the mapbox-streets vector source contains building-height
+	// data from OpenStreetMap.
+	map.on('load', function() {
+
+		map.addSource('02262020', {
+	type: 'vector',
+	url: 'mapbox://caraneel.ck745cpdh0ng92smxjmlhhz2p-5agy5'
+});
+
+			// Insert the layer beneath any symbol layer.
+			var layers = map.getStyle().layers;
+
+			var labelLayerId;
+			for (var i = 0; i < layers.length; i++) {
+					if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+							labelLayerId = layers[i].id;
+							break;
+					}
+			}
+
+			map.addLayer(
+					{
+							'id': 'building-extrusion',
+							'source': 'composite',
+							'source-layer': 'buildings',
+							'filter': ['==', 'extrude', 'true'],
+							'type': 'fill-extrusion',
+							'minzoom': 15,
+							'paint': {
+									'fill-extrusion-color': '#aaa',
+
+									// use an 'interpolate' expression to add a smooth transition effect to the
+									// buildings as the user zooms in
+									'fill-extrusion-height': [
+											'interpolate',
+											['linear'],
+											['zoom'],
+											15,
+											0,
+											15.05,
+											['get', 'height']
+									],
+									'fill-extrusion-base': [
+											'interpolate',
+											['linear'],
+											['zoom'],
+											15,
+											//0,
+											15.5,
+											['get', 'min_height']
+									],
+									'fill-extrusion-opacity': 0.6
+							}
+					},
+					labelLayerId
+			);
+	});
+
+map.on('click','building-extrusion', function(e) {
+// The event object (e) contains information like the
+// coordinates of the point on the map that was clicked.
+console.log(e.features[0].properties);
+var grad_rate = e.features[0].properties["graduation_rate"];
+var name = e.features[0].properties["school_name"];
+var eni = e.features[0].properties["Economic Need Index"];
+var method = e.features[0].properties["method1"];
+
+
+new mapboxgl.Popup()
+.setLngLat(e.lngLat)
+.setHTML('<h3>School Name:  </h3>' + name + "</br><h3>Grad Rate: </h3>" + grad_rate + "</br><h3>Economic Need Index:</h3>" + eni + "</br><h3>Admissions Method: </h3>" + method)
+.addTo(map);
+});
+</script>
+
+</body>
 </html>
